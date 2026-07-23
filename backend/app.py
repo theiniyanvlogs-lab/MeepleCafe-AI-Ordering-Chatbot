@@ -1,82 +1,228 @@
 """
 =========================================================
 Meeple Cafe AI Ordering Chatbot
-FastAPI Application
-Version : 1.0
+FastAPI Backend
+Version : 2.0
 =========================================================
 """
 
-from fastapi import FastAPI
+from typing import List, Optional
+
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-# Import chatbot
-try:
-    # Works when imported as: from backend.app import app
-    from backend.chatbot import CafeChatbot
-except ImportError:
-    # Works when running: python backend/app.py
-    from chatbot import CafeChatbot
+# ==========================================================
+# Import Backend Modules
+# ==========================================================
 
+try:
+    from backend.chatbot import CafeChatbot
+    from backend.search_engine import SearchEngine
+    from backend.ordering import OrderManager
+except ImportError:
+    from chatbot import CafeChatbot
+    from search_engine import SearchEngine
+    from ordering import OrderManager
 
 # ==========================================================
-# Create FastAPI App
+# FastAPI
 # ==========================================================
 
 app = FastAPI(
     title="Meeple Cafe AI Ordering Chatbot",
     description="AI Powered Restaurant Ordering Assistant",
-    version="1.0"
+    version="2.0.0",
 )
 
 # ==========================================================
-# Enable CORS
+# CORS
 # ==========================================================
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],      # Change in production
+    allow_origins=[
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 # ==========================================================
-# Initialize Chatbot
+# Initialize Services
 # ==========================================================
 
 chatbot = CafeChatbot()
+search_engine = SearchEngine()
+order_manager = OrderManager()
 
 # ==========================================================
-# Request Model
+# Models
 # ==========================================================
 
 class ChatRequest(BaseModel):
     message: str
 
 
-# ==========================================================
-# Response Model
-# ==========================================================
-
 class ChatResponse(BaseModel):
-    success: bool
-    response: str
+    answer: str
+
+
+class OrderItem(BaseModel):
+    id: int
+    quantity: int
+
+
+class OrderRequest(BaseModel):
+    customer_name: str
+    phone: str
+    email: Optional[str] = None
+    address: str
+    payment_method: str
+    items: List[OrderItem]
 
 
 # ==========================================================
-# Home
+# Root
 # ==========================================================
 
 @app.get("/")
 def home():
+    return {
+        "application": "Meeple Cafe AI Ordering Chatbot",
+        "version": "2.0.0",
+        "status": "Running",
+    }
+
+
+# ==========================================================
+# Health
+# ==========================================================
+
+@app.get("/health")
+def health():
+    return {
+        "status": "ok",
+        "version": "2.0.0",
+    }
+
+
+# ==========================================================
+# Restaurant Information
+# ==========================================================
+
+@app.get("/restaurant")
+def restaurant():
 
     return {
-        "success": True,
-        "application": "Meeple Cafe AI Ordering Chatbot",
-        "version": "1.0",
-        "status": "Running"
+        "name": "Meeple Cafe",
+        "address": "Chennai, Tamil Nadu",
+        "phone": "+91 9876543210",
+        "email": "support@meeplecafe.com",
+        "opening_hours": "9:00 AM - 10:00 PM",
     }
+
+
+# ==========================================================
+# Menu
+# ==========================================================
+
+@app.get("/menu")
+def get_menu():
+
+    try:
+        return search_engine.get_all_menu()
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ==========================================================
+# Search Menu
+# ==========================================================
+
+@app.get("/menu/search")
+def search_menu(q: str):
+
+    try:
+        return search_engine.search(q)
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ==========================================================
+# AI Chat
+# ==========================================================
+
+@app.post("/chat", response_model=ChatResponse)
+def chat(request: ChatRequest):
+
+    try:
+
+        answer = chatbot.chat(request.message)
+
+        return ChatResponse(answer=answer)
+
+    except Exception as e:
+
+        raise HTTPException(
+            status_code=500,
+            detail=str(e),
+        )
+
+
+# ==========================================================
+# Place Order
+# ==========================================================
+
+@app.post("/order")
+def place_order(order: OrderRequest):
+
+    try:
+
+        order_id = order_manager.place_order(
+            customer_name=order.customer_name,
+            phone=order.phone,
+            email=order.email,
+            address=order.address,
+            payment_method=order.payment_method,
+            items=[item.model_dump() for item in order.items],
+        )
+
+        return {
+            "order_id": order_id,
+            "status": "Preparing",
+            "message": "Order placed successfully",
+        }
+
+    except Exception as e:
+
+        raise HTTPException(
+            status_code=500,
+            detail=str(e),
+        )
+
+
+# ==========================================================
+# Orders
+# ==========================================================
+
+@app.get("/orders")
+def get_orders():
+
+    try:
+
+        return order_manager.get_orders()
+
+    except Exception as e:
+
+        raise HTTPException(
+            status_code=500,
+            detail=str(e),
+        )
 
 
 # ==========================================================
@@ -87,59 +233,12 @@ def home():
 def ping():
 
     return {
-        "success": True,
         "message": "pong"
     }
 
 
 # ==========================================================
-# Info
-# ==========================================================
-
-@app.get("/info")
-def info():
-
-    return {
-
-        "Project": "Meeple Cafe AI Ordering Chatbot",
-
-        "Backend": "FastAPI",
-
-        "Vector Database": "FAISS",
-
-        "Embedding Model": "Sentence Transformers",
-
-        "Database": "SQLite"
-
-    }
-
-
-# ==========================================================
-# Chat
-# ==========================================================
-
-@app.post("/chat", response_model=ChatResponse)
-def chat(request: ChatRequest):
-
-    try:
-
-        reply = chatbot.chat(request.message)
-
-        return ChatResponse(
-            success=True,
-            response=reply
-        )
-
-    except Exception as e:
-
-        return ChatResponse(
-            success=False,
-            response=str(e)
-        )
-
-
-# ==========================================================
-# Run Server
+# Run
 # ==========================================================
 
 if __name__ == "__main__":
@@ -147,7 +246,8 @@ if __name__ == "__main__":
     import uvicorn
 
     uvicorn.run(
-        app,
+        "app:app",
         host="0.0.0.0",
-        port=8000
+        port=8000,
+        reload=True,
     )
