@@ -2,78 +2,65 @@
 =========================================================
 Meeple Cafe AI Ordering Chatbot
 Order Manager
-Version : 2.0
+Version : 3.0
 =========================================================
 """
 
-import sqlite3
 import os
 import pandas as pd
+
+try:
+    from backend.database import db
+except ImportError:
+    from database import db
 
 
 class OrderManager:
 
     def __init__(self):
 
-        base_dir = os.path.dirname(__file__)
-
-        self.db_path = os.path.join(
-            base_dir,
-            "..",
-            "data",
-            "orders.db"
-        )
-
         self.menu_path = os.path.join(
-            base_dir,
+            os.path.dirname(__file__),
             "..",
             "data",
             "menu.csv"
         )
 
-        self._initialize_database()
+        self.menu = self._load_menu()
 
-    # -----------------------------------------------------
-    # Database Initialization
-    # -----------------------------------------------------
+    # =====================================================
+    # Load Menu
+    # =====================================================
 
-    def _initialize_database(self):
+    def _load_menu(self):
 
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
+        try:
 
-        cursor.execute("""
-        CREATE TABLE IF NOT EXISTS orders(
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            customer_name TEXT,
-            phone TEXT,
-            email TEXT,
-            address TEXT,
-            payment_method TEXT,
-            total REAL,
-            status TEXT DEFAULT 'Preparing',
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-        """)
+            df = pd.read_csv(self.menu_path).fillna("")
 
-        cursor.execute("""
-        CREATE TABLE IF NOT EXISTS order_items(
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            order_id INTEGER,
-            item_id INTEGER,
-            item_name TEXT,
-            quantity INTEGER,
-            price REAL,
-            subtotal REAL
-        )
-        """)
+            df["Item_ID"] = df["Item_ID"].astype(int)
 
-        conn.commit()
-        conn.close()
+            return df
 
-    # -----------------------------------------------------
+        except Exception as e:
+
+            print("Unable to load menu.csv")
+
+            print(e)
+
+            return pd.DataFrame()
+
+    # =====================================================
+    # Reload Menu
+    # =====================================================
+
+    def reload_menu(self):
+
+        self.menu = self._load_menu()
+
+    # =====================================================
     # Place Order
-    # -----------------------------------------------------
+    # =====================================================
 
     def place_order(
         self,
@@ -85,127 +72,283 @@ class OrderManager:
         items
     ):
 
-        menu = pd.read_csv(self.menu_path)
+        if self.menu.empty:
+            raise Exception("Menu database is empty.")
 
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
+        if len(items) == 0:
+            raise Exception("Cart is empty.")
 
         total = 0
+
         order_items = []
 
         for item in items:
 
-            menu_item = menu[
-                menu["Item_ID"] == item["id"]
-            ]
+            quantity = int(item["quantity"])
 
-            if menu_item.empty:
+            if quantity <= 0:
                 continue
 
-            row = menu_item.iloc[0]
+            result = self.menu[
+                self.menu["Item_ID"] == int(item["id"])
+            ]
+
+            if result.empty:
+                continue
+
+            row = result.iloc[0]
+
+            if str(row["Available"]).lower() != "yes":
+                continue
 
             price = float(row["Price"])
 
-            subtotal = price * item["quantity"]
+            subtotal = price * quantity
 
             total += subtotal
 
             order_items.append({
+
                 "item_id": int(row["Item_ID"]),
+
                 "item_name": row["Item_Name"],
+
+                "quantity": quantity,
+
                 "price": price,
-                "quantity": item["quantity"],
+
                 "subtotal": subtotal
+
             })
 
-        cursor.execute("""
-        INSERT INTO orders(
-            customer_name,
-            phone,
-            email,
-            address,
-            payment_method,
-            total
-        )
-        VALUES(?,?,?,?,?,?)
-        """, (
-            customer_name,
-            phone,
-            email,
-            address,
-            payment_method,
-            total
-        ))
+        if len(order_items) == 0:
+            raise Exception("No valid items available for ordering.")
 
-        order_id = cursor.lastrowid
+        with db.get_connection() as conn:
 
-        for item in order_items:
+            cursor = conn.cursor()
 
-            cursor.execute("""
-            INSERT INTO order_items(
-                order_id,
-                item_id,
-                item_name,
-                quantity,
-                price,
-                subtotal
+            cursor.execute(
+                """
+                INSERT INTO orders(
+
+                    customer_name,
+                    phone,
+                    email,
+                    address,
+                    payment_method,
+                    total,
+                    status
+
+                )
+                VALUES(?,?,?,?,?,?,?)
+                """,
+                (
+                    customer_name,
+                    phone,
+                    email,
+                    address,
+                    payment_method,
+                    total,
+                    "Preparing"
+                )
             )
-            VALUES(?,?,?,?,?,?)
-            """, (
-                order_id,
-                item["item_id"],
-                item["item_name"],
-                item["quantity"],
-                item["price"],
-                item["subtotal"]
-            ))
 
-        conn.commit()
-        conn.close()
+            order_id = cursor.lastrowid
+
+            for item in order_items:
+
+                cursor.execute(
+                    """
+                    INSERT INTO order_items(
+
+                        order_id,
+                        item_id,
+                        item_name,
+                        quantity,
+                        price,
+                        subtotal
+
+                    )
+                    VALUES(?,?,?,?,?,?)
+                    """,
+                    (
+                        order_id,
+                        item["item_id"],
+                        item["item_name"],
+                        item["quantity"],
+                        item["price"],
+                        item["subtotal"]
+                    )
+                )
 
         return order_id
 
-    # -----------------------------------------------------
-    # Get Orders
-    # -----------------------------------------------------
+    # =====================================================
+    # Get All Orders
+    # =====================================================
 
     def get_orders(self):
 
-        conn = sqlite3.connect(self.db_path)
-        conn.row_factory = sqlite3.Row
+        with db.get_connection() as conn:
 
-        cursor = conn.cursor()
+            cursor = conn.cursor()
 
-        cursor.execute("""
-        SELECT *
-        FROM orders
-        ORDER BY created_at DESC
-        """)
+            cursor.execute(
+                """
+                SELECT *
+                FROM orders
+                ORDER BY created_at DESC
+                """
+            )
 
-        orders = []
+            orders = []
 
-        for row in cursor.fetchall():
+            for row in cursor.fetchall():
+
+                order = dict(row)
+
+                cursor.execute(
+                    """
+                    SELECT
+
+                        item_id,
+                        item_name,
+                        quantity,
+                        price,
+                        subtotal
+
+                    FROM order_items
+
+                    WHERE order_id=?
+                    """,
+                    (row["id"],)
+                )
+
+                order["items"] = [
+
+                    dict(item)
+
+                    for item in cursor.fetchall()
+
+                ]
+
+                orders.append(order)
+
+        return orders
+
+    # =====================================================
+    # Get Single Order
+    # =====================================================
+
+    def get_order(self, order_id):
+
+        with db.get_connection() as conn:
+
+            cursor = conn.cursor()
+
+            cursor.execute(
+                """
+                SELECT *
+                FROM orders
+                WHERE id=?
+                """,
+                (order_id,)
+            )
+
+            row = cursor.fetchone()
+
+            if row is None:
+                return None
 
             order = dict(row)
 
-            cursor.execute("""
-            SELECT
-                item_id,
-                item_name,
-                quantity,
-                price,
-                subtotal
-            FROM order_items
-            WHERE order_id=?
-            """, (row["id"],))
+            cursor.execute(
+                """
+                SELECT
+
+                    item_id,
+                    item_name,
+                    quantity,
+                    price,
+                    subtotal
+
+                FROM order_items
+
+                WHERE order_id=?
+                """,
+                (order_id,)
+            )
 
             order["items"] = [
+
                 dict(item)
+
                 for item in cursor.fetchall()
+
             ]
 
-            orders.append(order)
+            return order
 
-        conn.close()
+    # =====================================================
+    # Update Status
+    # =====================================================
 
-        return orders
+    def update_status(self, order_id, status):
+
+        db.execute(
+            """
+            UPDATE orders
+
+            SET status=?
+
+            WHERE id=?
+            """,
+            (status, order_id)
+        )
+
+    # =====================================================
+    # Delete Order
+    # =====================================================
+
+    def delete_order(self, order_id):
+
+        with db.get_connection() as conn:
+
+            cursor = conn.cursor()
+
+            cursor.execute(
+                "DELETE FROM order_items WHERE order_id=?",
+                (order_id,)
+            )
+
+            cursor.execute(
+                "DELETE FROM orders WHERE id=?",
+                (order_id,)
+            )
+
+    # =====================================================
+    # Statistics
+    # =====================================================
+
+    def get_statistics(self):
+
+        with db.get_connection() as conn:
+
+            cursor = conn.cursor()
+
+            cursor.execute(
+                """
+                SELECT
+
+                    COUNT(*) AS total_orders,
+
+                    IFNULL(SUM(total),0) AS revenue,
+
+                    IFNULL(AVG(total),0) AS average_order
+
+                FROM orders
+                """
+            )
+
+            return dict(cursor.fetchone())
