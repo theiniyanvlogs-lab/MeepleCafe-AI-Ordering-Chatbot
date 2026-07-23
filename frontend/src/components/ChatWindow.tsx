@@ -6,12 +6,7 @@ import MessageBubble from "./MessageBubble";
 import ChatInput from "./ChatInput";
 import LoadingDots from "./LoadingDots";
 
-interface Message {
-  id: number;
-  sender: "user" | "bot";
-  text: string;
-  timestamp?: string;
-}
+import type { Message } from "@/types/chat";
 
 export default function ChatWindow() {
   const [messages, setMessages] = useState<Message[]>([
