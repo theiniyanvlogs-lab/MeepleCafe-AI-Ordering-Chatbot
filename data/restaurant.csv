@@ -1,0 +1,36 @@
+Field,Value
+Restaurant_Name,Meeple Cafe
+Tagline,"Eat. Play. Connect."
+Cuisine,"Cafe, Continental, Italian, Fast Food, Beverages"
+Location,Chennai
+Address,Chennai Tamil Nadu India
+Phone,+91-XXXXXXXXXX
+Email,info@meeplecafe.com
+Website,
+Instagram,
+Facebook,
+Opening_Time,10:00 AM
+Closing_Time,11:00 PM
+Open_Days,Monday to Sunday
+Happy_Hours,3:00 PM - 6:00 PM
+Weekday_Discount,20% OFF on entire bill
+Weekend_Discount,10% OFF on entire bill
+Weekday_Board_Game_Rate,₹100 per person per hour
+Weekend_Board_Game_Rate,₹120 per person per hour
+Parking,Available
+WiFi,Available
+Air_Conditioning,Available
+Board_Games,Available
+Reservation,Available
+Takeaway,Available
+Dine_In,Available
+Home_Delivery,Check with restaurant
+Payment_Methods,"Cash, UPI, Credit Card, Debit Card"
+Vegetarian,Yes
+Non_Vegetarian,Yes
+Pasta_Choices,"Spaghetti, Penne, Fusilli"
+Pasta_Addons,"Chicken ₹70, Paneer ₹70, Mushroom ₹60, Exotic Mixed Vegetables ₹60"
+Pizza_Addon,Extra Cheese ₹20
+Dessert_Addon,Ice Cream ₹50
+Combo_Discount,Happy Hour discount not applicable on combos
+Special_Features,"Board Games, Happy Hours, Premium Cafe Experience"
