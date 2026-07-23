@@ -1,0 +1,32 @@
+{
+  "name": "meeple-cafe-ai-ordering-chatbot",
+  "version": "1.0.0",
+  "private": true,
+  "description": "AI-powered Restaurant Ordering Chatbot built with Next.js 15, FastAPI, FAISS and RAG.",
+  "author": "Sugumar R",
+  "license": "MIT",
+  "scripts": {
+    "dev": "next dev --turbopack",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "lucide-react": "^0.542.0",
+    "next": "^15.5.2",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3",
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^24.3.0",
+    "@types/react": "^19.1.10",
+    "@types/react-dom": "^19.1.7",
+    "eslint": "^9",
+    "eslint-config-next": "^15.5.2",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}
