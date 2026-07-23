@@ -2,6 +2,7 @@ import type {
   ChatResponse,
   MenuItem,
   OrderRequest,
+  OrderResponse,
   RestaurantInfo,
 } from "@/types/chat";
 
@@ -10,25 +11,53 @@ const API_BASE_URL =
 
 class ApiService {
   // ==========================================
+  // Generic Request Handler
+  // ==========================================
+
+  private async request<T>(
+    endpoint: string,
+    options?: RequestInit
+  ): Promise<T> {
+    const response = await fetch(
+      `${API_BASE_URL}${endpoint}`,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          ...(options?.headers || {}),
+        },
+        ...options,
+      }
+    );
+
+    if (!response.ok) {
+      let message = "Something went wrong.";
+
+      try {
+        const error = await response.json();
+        message = error.detail || error.message || message;
+      } catch {
+        // Ignore JSON parsing errors
+      }
+
+      throw new Error(message);
+    }
+
+    return response.json();
+  }
+
+  // ==========================================
   // AI Chat
   // ==========================================
 
-  async sendMessage(message: string): Promise<ChatResponse> {
-    const response = await fetch(`${API_BASE_URL}/chat`, {
+  async sendMessage(
+    message: string
+  ): Promise<ChatResponse> {
+    return this.request<ChatResponse>("/chat", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
       body: JSON.stringify({
         message,
       }),
     });
-
-    if (!response.ok) {
-      throw new Error("Failed to connect to AI server.");
-    }
-
-    return await response.json();
   }
 
   // ==========================================
@@ -36,49 +65,40 @@ class ApiService {
   // ==========================================
 
   async getMenu(): Promise<MenuItem[]> {
-    const response = await fetch(`${API_BASE_URL}/menu`);
-
-    if (!response.ok) {
-      throw new Error("Unable to fetch menu.");
-    }
-
-    return await response.json();
+    return this.request<MenuItem[]>("/menu");
   }
 
   // ==========================================
   // Search Menu
   // ==========================================
 
-  async searchMenu(query: string): Promise<MenuItem[]> {
-    const response = await fetch(
-      `${API_BASE_URL}/menu/search?q=${encodeURIComponent(query)}`
+  async searchMenu(
+    query: string
+  ): Promise<MenuItem[]> {
+    return this.request<MenuItem[]>(
+      `/menu/search?q=${encodeURIComponent(query)}`
     );
-
-    if (!response.ok) {
-      throw new Error("Search failed.");
-    }
-
-    return await response.json();
   }
 
   // ==========================================
   // Place Order
   // ==========================================
 
-  async placeOrder(order: OrderRequest) {
-    const response = await fetch(`${API_BASE_URL}/order`, {
+  async placeOrder(
+    order: OrderRequest
+  ): Promise<OrderResponse> {
+    return this.request<OrderResponse>("/order", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
       body: JSON.stringify(order),
     });
+  }
 
-    if (!response.ok) {
-      throw new Error("Order submission failed.");
-    }
+  // ==========================================
+  // Get Orders
+  // ==========================================
 
-    return await response.json();
+  async getOrders(): Promise<OrderResponse[]> {
+    return this.request<OrderResponse[]>("/orders");
   }
 
   // ==========================================
@@ -86,30 +106,18 @@ class ApiService {
   // ==========================================
 
   async getRestaurantInfo(): Promise<RestaurantInfo> {
-    const response = await fetch(`${API_BASE_URL}/restaurant`);
-
-    if (!response.ok) {
-      throw new Error("Unable to fetch restaurant information.");
-    }
-
-    return await response.json();
+    return this.request<RestaurantInfo>("/restaurant");
   }
 
   // ==========================================
-  // Health Check (Optional)
+  // Health Check
   // ==========================================
 
   async healthCheck() {
-    const response = await fetch(`${API_BASE_URL}/health`);
-
-    if (!response.ok) {
-      throw new Error("Backend server is unavailable.");
-    }
-
-    return await response.json();
+    return this.request("/health");
   }
 }
 
-const api = new ApiService();
+export const api = new ApiService();
 
 export default api;
