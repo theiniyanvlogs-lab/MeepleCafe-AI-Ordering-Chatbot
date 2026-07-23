@@ -54,23 +54,36 @@ export interface CartItem extends MenuItem {
 // ======================================================
 
 export interface OrderItem {
-  menu_id: number;
+  id: number;
+  name: string;
   quantity: number;
+  price: number;
 }
 
 export interface OrderRequest {
   customer_name: string;
   phone: string;
   email?: string;
-  address?: string;
-  items: OrderItem[];
+  address: string;
+  payment_method: string;
+  items: {
+    id: number;
+    quantity: number;
+  }[];
 }
 
 export interface OrderResponse {
-  order_id: string;
-  total: number;
+  order_id: number;
+  customer_name: string;
+  phone?: string;
+  email?: string;
+  address?: string;
+  payment_method: string;
   status: string;
-  message: string;
+  total: number;
+  date: string;
+  items: OrderItem[];
+  message?: string;
 }
 
 // ======================================================
