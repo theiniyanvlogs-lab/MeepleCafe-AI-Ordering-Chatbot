@@ -1,194 +1,138 @@
 # 🍽️ Meeple Cafe AI Ordering Chatbot
 
-An AI-powered restaurant ordering chatbot built with **FastAPI**, **FAISS**, **Sentence Transformers**, and **SQLite**. The chatbot provides intelligent menu search, FAQ assistance, restaurant information, shopping cart management, and order placement using **Retrieval-Augmented Generation (RAG)**.
+An AI-powered restaurant ordering chatbot built using **FastAPI**, **FAISS**, **Sentence Transformers**, and **Next.js**. The chatbot allows customers to search the menu using natural language, place orders, manage their cart, and interact with an AI-powered restaurant assistant.
 
 ---
 
 ## 🚀 Features
 
-### 🤖 AI Restaurant Assistant
-
-- Semantic menu search using FAISS
-- Natural language understanding
-- Restaurant FAQ assistant
-- Restaurant information assistant
-- Context-aware conversations
-
-### 🍕 Menu Features
-
-- Browse menu
-- Search menu items
-- Category-wise search
-- Price-based search
-- Veg / Non-Veg search
-- Food recommendations
-
-### 🛒 Ordering System
-
-- Add items to cart
-- Remove items
-- View cart
-- Calculate GST
-- Checkout
-- Save orders to SQLite
-
-### 🧠 AI Knowledge Base
-
-- Menu knowledge
-- FAQ knowledge
-- Restaurant information
-- Vector search using embeddings
+- 🤖 AI-powered restaurant chatbot
+- 🔍 Semantic menu search using FAISS
+- 🧠 Retrieval-Augmented Generation (RAG)
+- 🍕 Natural language menu search
+- 🛒 Shopping cart management
+- 📦 Order placement
+- 📋 Order history
+- 💬 Conversation memory
+- ⚡ FastAPI REST API
+- 🎨 Modern Next.js frontend
+- 📱 Responsive design
+- 🔄 Real-time API communication
 
 ---
 
 # 🏗️ Project Architecture
 
-```
+```text
                  User
                    │
                    ▼
-            FastAPI Backend
+         Next.js Frontend (React)
                    │
-         ┌─────────┴─────────┐
-         │                   │
-         ▼                   ▼
- Conversation Memory      Order Manager
-         │                   │
-         └─────────┬─────────┘
+          REST API (FastAPI)
                    │
-                   ▼
-               RAG Engine
-                   │
-                   ▼
-             Vector Store
-                   │
-                   ▼
-              FAISS Search
-                   │
-                   ▼
-          menu.index + metadata.pkl
-                   │
-                   ▼
-         Menu + FAQ + Restaurant Data
+      ┌────────────┼────────────┐
+      ▼            ▼            ▼
+  Chatbot      Search Engine   Ordering
+      │            │            │
+      └───────┬────┴────────────┘
+              ▼
+          RAG Engine
+              │
+      ┌───────┴────────┐
+      ▼                ▼
+  FAISS Index      CSV Dataset
+              │
+              ▼
+         Sentence Transformer
 ```
 
 ---
 
 # 📂 Project Structure
 
-```
+```text
 MeepleCafe-AI-Ordering-Chatbot/
-
-backend/
 │
-├── app.py
-├── chatbot.py
-├── search_engine.py
-├── database.py
-├── memory.py
-├── ordering.py
-├── utils.py
-├── config.py
-├── build_vector_db.py
-├── vector_store.py
-└── rag.py
-
-data/
+├── backend/
+│   ├── app.py
+│   ├── chatbot.py
+│   ├── config.py
+│   ├── database.py
+│   ├── memory.py
+│   ├── ordering.py
+│   ├── rag.py
+│   ├── search_engine.py
+│   ├── utils.py
+│   └── vector_store.py
 │
-├── menu.csv
-├── faq.csv
-└── restaurant.csv
-
-vector_db/
+├── frontend/
+│   ├── app/
+│   ├── components/
+│   ├── context/
+│   ├── services/
+│   └── types/
 │
-├── menu.index
-└── metadata.pkl
-
-requirements.txt
-README.md
-LICENSE
+├── data/
+│   ├── menu.csv
+│   ├── faq.csv
+│   ├── restaurant.csv
+│   └── orders.db
+│
+├── vector_db/
+│   ├── menu.index
+│   └── metadata.pkl
+│
+├── requirements.txt
+├── README.md
+├── LICENSE
+├── .gitignore
+└── .env.example
 ```
 
 ---
 
-# 🛠️ Technologies Used
+# 🛠️ Technology Stack
 
-| Technology | Purpose |
-|------------|----------|
-| Python | Backend |
-| FastAPI | REST API |
-| FAISS | Vector Database |
-| Sentence Transformers | Embeddings |
-| SQLite | Order Database |
-| Pandas | Data Processing |
-| NumPy | Numerical Operations |
-| Scikit-learn | Utilities |
-| Uvicorn | FastAPI Server |
+## Backend
 
----
+- Python
+- FastAPI
+- Pydantic
+- SQLite
+- FAISS
+- Sentence Transformers
+- Uvicorn
 
-# 📊 AI Workflow
+## Frontend
 
-```
-CSV Files
+- Next.js 15
+- React 19
+- TypeScript
+- Tailwind CSS
+- Context API
 
-menu.csv
-faq.csv
-restaurant.csv
+## AI / Machine Learning
 
-        │
-
-        ▼
-
-build_vector_db.py
-
-        │
-
-Sentence Transformer
-
-        │
-
-Embeddings
-
-        │
-
-FAISS Index
-
-        │
-
-menu.index
-metadata.pkl
-
-        │
-
-vector_store.py
-
-        │
-
-RAG Search
-
-        │
-
-Restaurant Chatbot
-
-        │
-
-User Response
-```
+- RAG (Retrieval-Augmented Generation)
+- all-MiniLM-L6-v2
+- Semantic Search
+- Vector Embeddings
 
 ---
 
 # ⚙️ Installation
 
-Clone the repository
+## Clone Repository
 
 ```bash
-git clone https://github.com/theiniyanvlogs-lab/MeepleCafe-AI-Ordering-Chatbot.git
-
+git clone https://github.com/YOUR_USERNAME/MeepleCafe-AI-Ordering-Chatbot.git
 cd MeepleCafe-AI-Ordering-Chatbot
 ```
 
-Install dependencies
+---
+
+## Install Backend Dependencies
 
 ```bash
 pip install -r requirements.txt
@@ -196,58 +140,76 @@ pip install -r requirements.txt
 
 ---
 
-# 🧠 Build Vector Database
-
-Run once whenever the CSV files are updated.
-
-```bash
-python backend/build_vector_db.py
-```
-
-Generated files
-
-```
-vector_db/
-
-menu.index
-
-metadata.pkl
-```
-
----
-
-# ▶️ Run FastAPI
+## Run Backend
 
 ```bash
 uvicorn backend.app:app --reload
 ```
 
-or
+Backend URL
 
-```bash
-python backend/app.py
+```
+http://127.0.0.1:8000
+```
+
+Swagger Documentation
+
+```
+http://127.0.0.1:8000/docs
 ```
 
 ---
 
-# 💬 Example Questions
+## Run Frontend
+
+```bash
+cd frontend
+
+npm install
+
+npm run dev
+```
+
+Frontend URL
 
 ```
-Show me burgers
+http://localhost:3000
+```
+
+---
+
+# 📡 API Endpoints
+
+| Method | Endpoint | Description |
+|---------|----------|-------------|
+| GET | `/` | API Information |
+| GET | `/health` | Health Check |
+| GET | `/restaurant` | Restaurant Information |
+| GET | `/menu` | Get Complete Menu |
+| GET | `/menu/search?q=` | Search Menu |
+| POST | `/chat` | AI Chat |
+| POST | `/order` | Place Order |
+| GET | `/orders` | Order History |
+| GET | `/ping` | Ping API |
+
+---
+
+# 💬 Example Queries
+
+```text
+Hi
+
+Show burgers
 
 Pizza under ₹300
 
-Best coffee
+Veg dishes
 
-Do you have vegetarian food?
+Cold coffee
 
-Show desserts
+Desserts
 
-What are your opening hours?
-
-Do you have Wi-Fi?
-
-Add Margherita Pizza
+Add Veg Burger
 
 View cart
 
@@ -256,42 +218,65 @@ Checkout
 
 ---
 
-# 📁 Data Sources
+# 📸 Screenshots
 
-The chatbot is trained using:
+Add screenshots after deployment.
 
-- menu.csv
-- faq.csv
-- restaurant.csv
+```
+screenshots/
 
-These files are converted into embeddings and indexed using FAISS.
+home.png
+
+chat.png
+
+menu.png
+
+cart.png
+
+checkout.png
+
+orders.png
+```
 
 ---
 
-# 🗄️ Database
+# 🚀 Deployment
 
-SQLite stores:
+## Backend
 
-- Orders
-- Order Items
+Render
+
+## Frontend
+
+Vercel
 
 ---
 
-# 📈 Future Enhancements
+# 🔮 Future Enhancements
 
 - Voice Ordering
-- Image-based Menu Search
-- QR Code Ordering
 - Online Payments
-- Order Tracking
+- User Authentication
 - Admin Dashboard
-- Inventory Management
-- Customer Login
-- Recommendation Engine
-- Multi-language Support
-- WhatsApp Integration
 - Table Reservation
-- Live Kitchen Status
+- Multi-language Support
+- Recommendation Engine
+- Order Tracking
+- AI Menu Recommendations
+
+---
+
+# 🤝 Contributing
+
+Pull requests are welcome.
+
+For major changes, please open an issue first.
+
+---
+
+# 📄 License
+
+This project is licensed under the MIT License.
 
 ---
 
@@ -299,19 +284,22 @@ SQLite stores:
 
 **Sugumar R**
 
-AI Developer | Python | FastAPI | RAG | Machine Learning
+MBA | AI Developer | Business Analyst
 
 GitHub:
-https://github.com/theiniyanvlogs-lab
+https://github.com/YOUR_USERNAME
+
+LinkedIn:
+https://linkedin.com/in/YOUR_LINKEDIN
+
+Email:
+
+```
+contact.sugumarai@gmail.com
+```
 
 ---
 
 # ⭐ Support
 
-If you like this project, please consider giving it a ⭐ on GitHub.
-
----
-
-# 📄 License
-
-This project is released under the MIT License.
+If you like this project, please give it a ⭐ on GitHub.
