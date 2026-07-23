@@ -2,10 +2,12 @@
 =========================================================
 Meeple Cafe AI Ordering Chatbot
 FastAPI Backend
-Version : 2.0
+Version : 3.0.0
+Author  : Sugumar R
 =========================================================
 """
 
+from contextlib import asynccontextmanager
 from typing import List, Optional
 
 from fastapi import FastAPI, HTTPException
@@ -13,41 +15,29 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 # ==========================================================
-# Import Backend Modules
+# Backend Imports
 # ==========================================================
 
-try:
-    from backend.chatbot import CafeChatbot
-    from backend.search_engine import SearchEngine
-    from backend.ordering import OrderManager
-except ImportError:
-    from chatbot import CafeChatbot
-    from search_engine import SearchEngine
-    from ordering import OrderManager
-
-# ==========================================================
-# FastAPI
-# ==========================================================
-
-app = FastAPI(
-    title="Meeple Cafe AI Ordering Chatbot",
-    description="AI Powered Restaurant Ordering Assistant",
-    version="2.0.0",
+from backend.config import (
+    API_TITLE,
+    API_VERSION,
+    API_DESCRIPTION,
+    ALLOWED_ORIGINS,
+    RESTAURANT_NAME,
+    RESTAURANT_PHONE,
+    RESTAURANT_EMAIL,
+    OPENING_HOURS,
 )
 
-# ==========================================================
-# CORS
-# ==========================================================
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-    ],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+from backend.chatbot import CafeChatbot
+from backend.search_engine import SearchEngine
+from backend.ordering import OrderManager
+from backend.rag import rag_engine
+from backend.memory import memory
+from backend.utils import (
+    current_datetime,
+    health_status,
+    success_response,
 )
 
 # ==========================================================
@@ -59,7 +49,58 @@ search_engine = SearchEngine()
 order_manager = OrderManager()
 
 # ==========================================================
-# Models
+# Application Lifespan
+# ==========================================================
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    print("=" * 60)
+    print("🚀 Starting Meeple Cafe AI Ordering Chatbot")
+    print("=" * 60)
+
+    try:
+        print("✅ Chatbot Loaded")
+        print("✅ Search Engine Loaded")
+        print("✅ Order Manager Loaded")
+        print("✅ RAG Engine Loaded")
+        print("✅ Conversation Memory Loaded")
+
+    except Exception as e:
+        print(f"❌ Startup Error: {e}")
+
+    yield
+
+    print("=" * 60)
+    print("🛑 Application Shutdown")
+    print("=" * 60)
+
+# ==========================================================
+# FastAPI
+# ==========================================================
+
+app = FastAPI(
+    title=API_TITLE,
+    version=API_VERSION,
+    description=API_DESCRIPTION,
+    lifespan=lifespan,
+    docs_url="/docs",
+    redoc_url="/redoc",
+)
+
+# ==========================================================
+# CORS
+# ==========================================================
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=ALLOWED_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# ==========================================================
+# Request Models
 # ==========================================================
 
 class ChatRequest(BaseModel):
@@ -83,6 +124,21 @@ class OrderRequest(BaseModel):
     payment_method: str
     items: List[OrderItem]
 
+# ==========================================================
+# Response Models
+# ==========================================================
+
+class HealthResponse(BaseModel):
+    status: str
+    version: str
+    server_time: str
+
+
+class InfoResponse(BaseModel):
+    application: str
+    version: str
+    restaurant: str
+    status: str
 
 # ==========================================================
 # Root
@@ -90,23 +146,50 @@ class OrderRequest(BaseModel):
 
 @app.get("/")
 def home():
+
     return {
-        "application": "Meeple Cafe AI Ordering Chatbot",
-        "version": "2.0.0",
+        "application": API_TITLE,
+        "version": API_VERSION,
         "status": "Running",
+        "restaurant": RESTAURANT_NAME,
+        "documentation": "/docs",
+        "health": "/health",
     }
 
 
 # ==========================================================
-# Health
+# Health Check
 # ==========================================================
 
-@app.get("/health")
+@app.get(
+    "/health",
+    response_model=HealthResponse,
+)
 def health():
-    return {
-        "status": "ok",
-        "version": "2.0.0",
-    }
+
+    return HealthResponse(
+        status="Healthy",
+        version=API_VERSION,
+        server_time=current_datetime(),
+    )
+
+
+# ==========================================================
+# API Information
+# ==========================================================
+
+@app.get(
+    "/info",
+    response_model=InfoResponse,
+)
+def info():
+
+    return InfoResponse(
+        application=API_TITLE,
+        version=API_VERSION,
+        restaurant=RESTAURANT_NAME,
+        status="Running",
+    )
 
 
 # ==========================================================
@@ -116,27 +199,41 @@ def health():
 @app.get("/restaurant")
 def restaurant():
 
-    return {
-        "name": "Meeple Cafe",
-        "address": "Chennai, Tamil Nadu",
-        "phone": "+91 9876543210",
-        "email": "support@meeplecafe.com",
-        "opening_hours": "9:00 AM - 10:00 PM",
-    }
+    return success_response(
+        {
+            "name": RESTAURANT_NAME,
+            "phone": RESTAURANT_PHONE,
+            "email": RESTAURANT_EMAIL,
+            "opening_hours": OPENING_HOURS,
+            "generated_at": current_datetime(),
+        }
+    )
 
 
 # ==========================================================
-# Menu
+# Complete Menu
 # ==========================================================
 
 @app.get("/menu")
 def get_menu():
 
     try:
-        return search_engine.get_all_menu()
+
+        menu = search_engine.get_all_menu()
+
+        return success_response(
+            {
+                "total_items": len(menu),
+                "menu": menu,
+            }
+        )
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+
+        raise HTTPException(
+            status_code=500,
+            detail=f"Unable to load menu: {e}",
+        )
 
 
 # ==========================================================
@@ -147,30 +244,47 @@ def get_menu():
 def search_menu(q: str):
 
     try:
-        return search_engine.search(q)
+
+        results = search_engine.search(q)
+
+        return success_response(
+            {
+                "query": q,
+                "count": len(results),
+                "results": results,
+            }
+        )
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
 
+        raise HTTPException(
+            status_code=500,
+            detail=f"Search failed: {e}",
+        )
 
 # ==========================================================
 # AI Chat
 # ==========================================================
 
-@app.post("/chat", response_model=ChatResponse)
+@app.post(
+    "/chat",
+    response_model=ChatResponse,
+)
 def chat(request: ChatRequest):
 
     try:
 
         answer = chatbot.chat(request.message)
 
-        return ChatResponse(answer=answer)
+        return ChatResponse(
+            answer=answer
+        )
 
     except Exception as e:
 
         raise HTTPException(
             status_code=500,
-            detail=str(e),
+            detail=f"Chatbot Error: {e}",
         )
 
 
@@ -192,22 +306,25 @@ def place_order(order: OrderRequest):
             items=[item.model_dump() for item in order.items],
         )
 
-        return {
-            "order_id": order_id,
-            "status": "Preparing",
-            "message": "Order placed successfully",
-        }
+        return success_response(
+            {
+                "order_id": order_id,
+                "status": "Preparing",
+                "message": "Your order has been placed successfully.",
+                "created_at": current_datetime(),
+            }
+        )
 
     except Exception as e:
 
         raise HTTPException(
             status_code=500,
-            detail=str(e),
+            detail=f"Order Error: {e}",
         )
 
 
 # ==========================================================
-# Orders
+# Order History
 # ==========================================================
 
 @app.get("/orders")
@@ -215,13 +332,47 @@ def get_orders():
 
     try:
 
-        return order_manager.get_orders()
+        orders = order_manager.get_orders()
+
+        return success_response(
+            {
+                "total_orders": len(orders),
+                "orders": orders,
+            }
+        )
 
     except Exception as e:
 
         raise HTTPException(
             status_code=500,
-            detail=str(e),
+            detail=f"Unable to retrieve orders: {e}",
+        )
+
+
+# ==========================================================
+# Statistics
+# ==========================================================
+
+@app.get("/stats")
+def statistics():
+
+    try:
+
+        return success_response(
+            {
+                "chat_sessions": memory.total_sessions(),
+                "messages": memory.total_messages(),
+                "vector_documents": rag_engine.vector_store.size(),
+                "orders": len(order_manager.get_orders()),
+                "server_time": current_datetime(),
+            }
+        )
+
+    except Exception as e:
+
+        raise HTTPException(
+            status_code=500,
+            detail=f"Statistics Error: {e}",
         )
 
 
@@ -233,12 +384,13 @@ def get_orders():
 def ping():
 
     return {
-        "message": "pong"
+        "message": "pong",
+        "time": current_datetime(),
     }
 
 
 # ==========================================================
-# Run
+# Run Application
 # ==========================================================
 
 if __name__ == "__main__":
@@ -246,8 +398,9 @@ if __name__ == "__main__":
     import uvicorn
 
     uvicorn.run(
-        "app:app",
+        "backend.app:app",
         host="0.0.0.0",
         port=8000,
         reload=True,
     )
+
