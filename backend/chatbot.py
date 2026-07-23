@@ -1,50 +1,47 @@
 """
 =========================================================
 Meeple Cafe AI Ordering Chatbot
-Chatbot Controller
+Main Chatbot Controller
 Version : 1.0
 =========================================================
 """
 
-from search_engine import MenuSearchEngine
+import re
+
+from rag import RAGEngine
 from ordering import OrderManager
 from memory import ConversationMemory
 
 
-class RestaurantChatbot:
+class CafeChatbot:
     """
-    Main Chatbot Controller
-
-    Responsibilities
-    ----------------
-    1. Greeting
-    2. Menu Search
-    3. Recommendation
-    4. Cart Management
-    5. Checkout
-    6. FAQ
+    Main AI Chatbot Controller
     """
 
     def __init__(self):
 
-        self.search = MenuSearchEngine()
+        self.rag = RAGEngine()
         self.order = OrderManager()
         self.memory = ConversationMemory()
 
-    # ----------------------------------------------------
+    # =====================================================
+    # Main Chat Function
+    # =====================================================
 
-    def get_response(self, message: str, session_id: str = "guest"):
+    def chat(self, user_message):
 
-        message = message.strip()
+        user_message = user_message.strip()
 
-        if not message:
-            return "Please type your question."
+        if not user_message:
+            return "Please enter your message."
 
-        lower = message.lower()
+        self.memory.add_user_message(user_message)
 
-        # ------------------------------------------
+        message = user_message.lower()
+
+        # ---------------------------------------------
         # Greetings
-        # ------------------------------------------
+        # ---------------------------------------------
 
         greetings = [
             "hi",
@@ -54,81 +51,131 @@ class RestaurantChatbot:
             "good evening"
         ]
 
-        if lower in greetings:
+        if any(g in message for g in greetings):
 
-            return (
+            reply = (
                 "👋 Welcome to Meeple Cafe!\n\n"
-                "How can I help you today?\n\n"
-                "🍔 Burgers\n"
-                "🍕 Pizza\n"
-                "☕ Coffee\n"
-                "🥤 Shakes\n"
-                "🍟 Snacks\n"
-                "🍝 Pasta"
+                "How may I help you today?\n\n"
+                "You can ask things like:\n"
+                "• Show burgers\n"
+                "• Pizza under ₹300\n"
+                "• Do you have desserts?\n"
+                "• Add Margherita Pizza\n"
+                "• View cart"
             )
 
-        # ------------------------------------------
+            self.memory.add_bot_message(reply)
+            return reply
+
+        # ---------------------------------------------
         # View Cart
-        # ------------------------------------------
+        # ---------------------------------------------
 
-        if "cart" in lower:
+        if "view cart" in message or "cart" == message:
 
-            return self.order.view_cart(session_id)
+            cart = self.order.view_cart()
 
-        # ------------------------------------------
+            self.memory.add_bot_message(cart)
+
+            return cart
+
+        # ---------------------------------------------
         # Checkout
-        # ------------------------------------------
+        # ---------------------------------------------
 
-        if "checkout" in lower:
+        if "checkout" in message:
 
-            return self.order.checkout(session_id)
+            result = self.order.checkout()
 
-        # ------------------------------------------
-        # Add Item
-        # ------------------------------------------
+            self.memory.add_bot_message(result)
 
-        if lower.startswith("add "):
-
-            item_name = message[4:]
-
-            return self.order.add_item(
-                session_id,
-                item_name
-            )
-
-        # ------------------------------------------
-        # Remove Item
-        # ------------------------------------------
-
-        if lower.startswith("remove "):
-
-            item_name = message[7:]
-
-            return self.order.remove_item(
-                session_id,
-                item_name
-            )
-
-        # ------------------------------------------
-        # Menu Search
-        # ------------------------------------------
-
-        result = self.search.search(message)
-
-        if result:
             return result
 
-        # ------------------------------------------
-        # Default
-        # ------------------------------------------
+        # ---------------------------------------------
+        # Clear Cart
+        # ---------------------------------------------
 
-        return (
-            "Sorry, I couldn't understand your request.\n\n"
-            "Try asking:\n"
-            "• Show Burgers\n"
-            "• Show Pizza\n"
-            "• Coffee below ₹200\n"
-            "• Veg Pasta\n"
-            "• Add Burger\n"
-            "• View Cart"
+        if "clear cart" in message:
+
+            self.order.clear_cart()
+
+            reply = "🗑️ Cart cleared successfully."
+
+            self.memory.add_bot_message(reply)
+
+            return reply
+
+        # ---------------------------------------------
+        # Remove Item
+        # ---------------------------------------------
+
+        remove = re.search(
+            r"remove (.+)",
+            message
         )
+
+        if remove:
+
+            item = remove.group(1)
+
+            reply = self.order.remove_item(item)
+
+            self.memory.add_bot_message(reply)
+
+            return reply
+
+        # ---------------------------------------------
+        # Add Item
+        # ---------------------------------------------
+
+        add = re.search(
+            r"add (.+)",
+            user_message,
+            re.IGNORECASE
+        )
+
+        if add:
+
+            item = add.group(1)
+
+            reply = self.order.add_item(item)
+
+            self.memory.add_bot_message(reply)
+
+            return reply
+
+        # ---------------------------------------------
+        # RAG Search
+        # ---------------------------------------------
+
+        reply = self.rag.ask(user_message)
+
+        self.memory.add_bot_message(reply)
+
+        return reply
+
+
+# =========================================================
+# Testing
+# =========================================================
+
+if __name__ == "__main__":
+
+    bot = CafeChatbot()
+
+    print("=" * 60)
+    print("Meeple Cafe AI Chatbot")
+    print("Type 'exit' to quit")
+    print("=" * 60)
+
+    while True:
+
+        message = input("\nYou : ")
+
+        if message.lower() == "exit":
+            break
+
+        response = bot.chat(message)
+
+        print("\nBot :")
+        print(response)
