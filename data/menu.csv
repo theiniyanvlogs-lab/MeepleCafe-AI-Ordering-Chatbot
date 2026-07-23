@@ -1,0 +1,75 @@
+Item_ID,Category,Sub_Category,Item_Name,Type,Price,Description,Keywords,Available
+1,Shakes & Smoothies,Shake,Berry Bliss Shake,Veg,229,Creamy shake with mixed berries,"shake,berry,smoothie",Yes
+2,Shakes & Smoothies,Shake,Classic Milo Shake,Veg,199,Chocolate malt milkshake,"milo,shake,chocolate",Yes
+3,Shakes & Smoothies,Shake,Signature Chocolate Shake,Veg,199,Smooth chocolate indulgence,"chocolate,shake",Yes
+4,Shakes & Smoothies,Smoothie,Green Detox Smoothie,Veg,199,Healthy green smoothie,"smoothie,healthy,green",Yes
+5,Shakes & Smoothies,Shake,Lotus Biscoff Shake,Veg,275,Milkshake topped with Lotus Biscoff,"lotus,biscoff,shake",Yes
+
+6,Frappe,Frappe,Classic Caramel Frappe,Veg,219,Coffee caramel frappe,"frappe,caramel,cold coffee",Yes
+7,Frappe,Frappe,Oreo Frappe,Veg,229,Oreo cookie frappe,"oreo,frappe",Yes
+8,Frappe,Frappe,Brownie Frappe,Veg,259,Chocolate brownie frappe,"brownie,frappe,chocolate",Yes
+
+9,Desserts,Ice Cream,Premium Ice Cream Selection,Veg,119,Classic premium ice cream,"ice cream,dessert",Yes
+10,Desserts,Ice Cream,Brownie with Vanilla Ice Cream,Veg,189,Brownie served with vanilla ice cream,"brownie,dessert",Yes
+11,Desserts,Coffee Dessert,Affogato,Veg,199,Vanilla ice cream with espresso,"affogato,coffee,dessert",Yes
+12,Desserts,Waffle,Belgian Style Waffles,Veg,149,Fresh Belgian waffle,"waffle,dessert",Yes
+13,Desserts,Add-On,Ice Cream Add-On,Veg,50,Extra scoop of ice cream,"addon,ice cream",Yes
+
+14,Hot Beverages,Coffee,Caffe Americano,Veg,119,Espresso with hot water,"coffee,americano",Yes
+15,Hot Beverages,Coffee,South Indian Filter Kaapi,Veg,99,Traditional filter coffee,"filter coffee,kaapi",Yes
+16,Hot Beverages,Coffee,Spanish Latte,Veg,179,Sweet Spanish style latte,"latte,coffee",Yes
+
+17,Hot Beverages,Tea,Tea Collection,Veg,99,Tea selection,"tea",Yes
+18,Hot Beverages,Tea,Masala Chai Latte,Veg,109,Indian masala chai,"tea,chai",Yes
+19,Hot Beverages,Tea,Matcha Latte,Veg,149,Japanese matcha latte,"matcha,tea",Yes
+
+20,Hot Beverages,Chocolate,Dark Belgian Hot Chocolate,Veg,249,Rich Belgian chocolate drink,"hot chocolate",Yes
+21,Hot Beverages,Chocolate,Salted Caramel Mocha,Veg,259,Chocolate mocha with caramel,"mocha,coffee",Yes
+
+22,Iced Coffee,Coffee,Iced Spanish Latte,Veg,199,Cold Spanish latte,"iced coffee",Yes
+23,Iced Coffee,Coffee,Vintage Cold Coffee,Veg,189,Classic cold coffee,"cold coffee",Yes
+24,Iced Coffee,Coffee,Panam Pazham Iced Coffee,Veg,199,Fruit inspired iced coffee,"iced coffee",Yes
+25,Iced Coffee,Coffee,Blueberry Iced Latte,Veg,259,Blueberry flavoured latte,"latte,blueberry",Yes
+
+26,Refreshers,Lemonade,Butterfly Pea Lemonade,Veg,179,Butterfly pea lemonade,"lemonade",Yes
+27,Refreshers,Iced Tea,Bombay Masala Lemon Iced Tea,Veg,149,Masala lemon iced tea,"iced tea",Yes
+28,Refreshers,Fizz,Strawberry Basil Fizz,Veg,199,Strawberry basil fizz,"fizz",Yes
+29,Refreshers,Iced Tea,Passion Fruit Iced Tea,Veg,199,Tropical iced tea,"iced tea",Yes
+30,Refreshers,Iced Tea,Peach Iced Tea,Veg,199,Peach flavoured iced tea,"peach",Yes
+31,Refreshers,Cooler,Guava Chilli Cooler,Veg,179,Guava chilli cooler,"cooler",Yes
+32,Refreshers,Mojito,Classic Mojito,Veg,149,Fresh mint mojito,"mojito",Yes
+
+33,Pasta,Pasta,Napoletana,Veg,229,Slow simmered tomato basil pasta,"pasta",Yes
+34,Pasta,Pasta,Arrabbiata,Veg,239,Spicy tomato pasta,"pasta,spicy",Yes
+35,Pasta,Pasta,Alfredo,Veg,259,Creamy parmesan pasta,"pasta,white sauce",Yes
+36,Pasta,Pasta,Pink Velvet,Veg,249,Tomato cream sauce pasta,"pasta,pink sauce",Yes
+
+37,Pizza,Pizza,Margherita Classica,Veg,179,Classic mozzarella pizza,"pizza",Yes
+38,Pizza,Pizza,Farmhouse Pizza,Veg,199,Vegetable pizza,"pizza,veg",Yes
+39,Pizza,Pizza,Paneer Tikka Supreme,Veg,229,Paneer tikka pizza,"pizza,paneer",Yes
+40,Pizza,Pizza,Chicken Pizza,Non Veg,249,Chicken BBQ pizza,"pizza,chicken",Yes
+
+41,Burger,Burger,Classic Vegetable Stack,Veg,179,Layered vegetable burger,"burger,veg",Yes
+42,Burger,Burger,Nashville Hot Chicken Burger,Non Veg,249,Spicy chicken burger,"burger,chicken",Yes
+43,Burger,Burger,Smashed Chicken & Cheddar Burger,Non Veg,259,Chicken cheddar burger,"burger,cheddar",Yes
+44,Burger,Burger,Crispy Fried Chicken Burger,Non Veg,229,Crispy fried chicken burger,"burger,chicken",Yes
+
+45,Small Plates,Fries,Sea Salt Classic Fries,Veg,129,Classic fries,"fries",Yes
+46,Small Plates,Fries,Peri Peri Spiced Fries,Veg,149,Peri peri fries,"fries,peri peri",Yes
+47,Small Plates,Fries,Cajun Sweet Potato Batons,Veg,169,Sweet potato fries,"sweet potato",Yes
+48,Small Plates,Bruschetta,Artisan Bruschetta Trio,Veg,179,Bruschetta platter,"bruschetta",Yes
+49,Small Plates,Paneer Bites,Peri Peri Paneer Bites,Veg,249,Paneer cubes,"paneer",Yes
+50,Small Plates,Poppers,Jalapeno Cheese Poppers,Veg,219,Jalapeno cheese poppers,"jalapeno",Yes
+51,Small Plates,Nachos,Grand Cheese Nachos,Veg,179,Loaded cheese nachos,"nachos",Yes
+52,Small Plates,Cauliflower,Korean Gochujang Cauliflower,Veg,179,Gochujang cauliflower,"cauliflower",Yes
+53,Small Plates,Chicken Wings,Hot Chicken Wings,Non Veg,239,Choice of sauce,"wings,chicken",Yes
+54,Small Plates,Chicken,Korean Chicken Tenders,Non Veg,249,Korean style tenders,"chicken",Yes
+55,Small Plates,Loaded Fries,Crunchy Chicken Loaded Fries,Non Veg,279,Loaded fries,"loaded fries",Yes
+
+56,Sandwiches & Wraps,Toastie,Classic Garden Toastie,Veg,149,Grilled vegetable toastie,"toastie",Yes
+57,Sandwiches & Wraps,Panini,Grilled Vegetable Pesto Panini,Veg,229,Pesto vegetable panini,"panini",Yes
+58,Sandwiches & Wraps,Panini,Cheese Corn Paneer Melt,Veg,229,Cheese corn paneer sandwich,"paneer",Yes
+59,Sandwiches & Wraps,Wrap,Paneer Tikka Wrap,Veg,229,Paneer tikka wrap,"wrap,paneer",Yes
+60,Sandwiches & Wraps,Panini,Grilled Chicken Pesto Panini,Non Veg,249,Chicken pesto panini,"panini,chicken",Yes
+61,Sandwiches & Wraps,Wrap,Chettinad Pulled Chicken Wrap,Non Veg,249,Chettinad chicken wrap,"wrap,chicken",Yes
+62,Sandwiches & Wraps,Wrap,Crispy Fried Chicken Wrap,Non Veg,229,Crispy chicken wrap,"wrap,chicken",Yes
