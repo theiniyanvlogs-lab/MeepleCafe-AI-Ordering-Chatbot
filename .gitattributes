@@ -1,0 +1,52 @@
+# ==========================================
+# Meeple Cafe AI Ordering Chatbot
+# Git Attributes
+# ==========================================
+
+# Auto detect text files
+* text=auto
+
+# Python
+*.py text eol=lf
+
+# JavaScript / TypeScript
+*.js text eol=lf
+*.jsx text eol=lf
+*.ts text eol=lf
+*.tsx text eol=lf
+
+# Web Files
+*.html text eol=lf
+*.css text eol=lf
+*.scss text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
+
+# Shell Scripts
+*.sh text eol=lf
+
+# Environment Files
+*.env text eol=lf
+
+# CSV Files
+*.csv text eol=lf
+
+# SQL Files
+*.sql text eol=lf
+
+# Binary Files
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.pkl binary
+*.faiss binary
+*.db binary
+
+# Windows Files
+*.bat text eol=crlf
+*.cmd text eol=crlf
