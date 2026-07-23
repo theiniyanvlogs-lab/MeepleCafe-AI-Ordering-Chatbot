@@ -1,32 +1,29 @@
 import Navbar from "@/components/Navbar";
 import Sidebar from "@/components/Sidebar";
 import ChatWindow from "@/components/ChatWindow";
+import CartPanel from "@/components/CartPanel";
 
 export default function Home() {
   return (
     <main className="flex h-screen bg-gray-100">
+      {/* Sidebar */}
       <Sidebar />
 
-      <div className="flex flex-1 flex-col">
+      {/* Main Content */}
+      <div className="flex flex-1 flex-col overflow-hidden">
+        {/* Navbar */}
         <Navbar />
 
-        <div className="flex flex-1">
-          {/* Chat */}
-          <section className="flex-1">
+        {/* Main Layout */}
+        <div className="flex flex-1 overflow-hidden">
+          {/* Chat Section */}
+          <section className="flex flex-1 overflow-hidden">
             <ChatWindow />
           </section>
 
-          {/* Cart */}
-          <aside className="hidden w-80 border-l bg-white lg:block">
-            <div className="p-6">
-              <h2 className="mb-4 text-xl font-semibold">
-                🛒 Cart
-              </h2>
-
-              <p className="text-gray-500">
-                Your cart is empty.
-              </p>
-            </div>
+          {/* Cart Panel */}
+          <aside className="hidden w-96 border-l bg-white xl:block">
+            <CartPanel />
           </aside>
         </div>
       </div>
