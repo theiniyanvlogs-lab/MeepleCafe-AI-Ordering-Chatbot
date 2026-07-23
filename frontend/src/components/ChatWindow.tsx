@@ -3,6 +3,7 @@
 import { useState } from "react";
 import MessageBubble from "./MessageBubble";
 import ChatInput from "./ChatInput";
+import LoadingDots from "./LoadingDots";
 
 interface Message {
   id: number;
@@ -19,8 +20,9 @@ export default function ChatWindow() {
     },
   ]);
 
+  const [loading, setLoading] = useState(false);
+
   const handleSend = (text: string) => {
-    // Add user message
     setMessages((prev) => [
       ...prev,
       {
@@ -28,28 +30,41 @@ export default function ChatWindow() {
         sender: "user",
         text,
       },
-      {
-        id: Date.now() + 1,
-        sender: "bot",
-        text: "🤖 AI response will come from FastAPI backend.",
-      },
     ]);
+
+    setLoading(true);
+
+    // Simulate backend response
+    setTimeout(() => {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now() + 1,
+          sender: "bot",
+          text: "🤖 This response will come from your FastAPI + RAG backend.",
+        },
+      ]);
+
+      setLoading(false);
+    }, 1500);
   };
 
   return (
     <div className="flex h-full flex-col bg-gray-50">
 
+      {/* Header */}
       <div className="border-b bg-white px-6 py-4 shadow-sm">
         <h2 className="text-lg font-semibold">
           🤖 Meeple AI Assistant
         </h2>
 
         <p className="text-sm text-gray-500">
-          Ask about our menu or place an order.
+          Ask about menu, offers, or place an order.
         </p>
       </div>
 
-      <div className="flex-1 space-y-4 overflow-y-auto p-6">
+      {/* Messages */}
+      <div className="flex-1 overflow-y-auto space-y-4 p-6">
         {messages.map((message) => (
           <MessageBubble
             key={message.id}
@@ -57,9 +72,15 @@ export default function ChatWindow() {
             text={message.text}
           />
         ))}
+
+        {loading && <LoadingDots />}
       </div>
 
-      <ChatInput onSend={handleSend} />
+      {/* Input */}
+      <ChatInput
+        onSend={handleSend}
+        disabled={loading}
+      />
 
     </div>
   );
