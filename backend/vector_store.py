@@ -2,230 +2,208 @@
 =========================================================
 Meeple Cafe AI Ordering Chatbot
 FAISS Vector Store
-Version : 1.0
+Version : 3.0
 =========================================================
 """
 
 import os
 import pickle
-
 import faiss
 import numpy as np
-
 from sentence_transformers import SentenceTransformer
 
-from config import (
-    FAISS_INDEX,
-    METADATA_FILE,
-    EMBEDDING_MODEL,
-    TOP_K_RESULTS
-)
+try:
+    from backend.config import (
+        FAISS_INDEX,
+        FAISS_METADATA,
+        EMBEDDING_MODEL,
+        TOP_K,
+    )
+except ImportError:
+    from config import (
+        FAISS_INDEX,
+        FAISS_METADATA,
+        EMBEDDING_MODEL,
+        TOP_K,
+    )
 
 
 class VectorStore:
     """
-    FAISS Vector Search Engine
+    FAISS Vector Store
+
+    Features
+    --------
+    ✔ Load FAISS index
+    ✔ Load metadata
+    ✔ Load embedding model
+    ✔ Semantic similarity search
+    ✔ Return top-k menu chunks
     """
 
     def __init__(self):
 
-        if not os.path.exists(FAISS_INDEX):
-            raise FileNotFoundError(
-                f"FAISS index not found:\n{FAISS_INDEX}"
-            )
+        self.index = None
+        self.metadata = []
+        self.model = None
 
-        if not os.path.exists(METADATA_FILE):
-            raise FileNotFoundError(
-                f"Metadata file not found:\n{METADATA_FILE}"
-            )
+        self.load()
 
-        print("Loading embedding model...")
+    # =====================================================
+    # Load Everything
+    # =====================================================
+
+    def load(self):
+
+        self._load_model()
+        self._load_index()
+        self._load_metadata()
+
+    # =====================================================
+    # Load Embedding Model
+    # =====================================================
+
+    def _load_model(self):
 
         self.model = SentenceTransformer(
             EMBEDDING_MODEL
         )
 
-        print("Loading FAISS index...")
+    # =====================================================
+    # Load FAISS Index
+    # =====================================================
+
+    def _load_index(self):
+
+        if not os.path.exists(FAISS_INDEX):
+
+            raise FileNotFoundError(
+                f"FAISS index not found:\n{FAISS_INDEX}"
+            )
 
         self.index = faiss.read_index(
-            FAISS_INDEX
+            str(FAISS_INDEX)
         )
 
-        print("Loading metadata...")
+    # =====================================================
+    # Load Metadata
+    # =====================================================
 
-        with open(METADATA_FILE, "rb") as f:
+    def _load_metadata(self):
+
+        if not os.path.exists(FAISS_METADATA):
+
+            raise FileNotFoundError(
+                f"Metadata file not found:\n{FAISS_METADATA}"
+            )
+
+        with open(FAISS_METADATA, "rb") as f:
+
             self.metadata = pickle.load(f)
-
-        print("=" * 50)
-        print("Vector Store Loaded Successfully")
-        print(f"Documents : {len(self.metadata)}")
-        print("=" * 50)
 
     # =====================================================
     # Encode Query
     # =====================================================
 
-    def encode(self, query):
+    def encode(self, text: str):
 
         embedding = self.model.encode(
-            [query],
-            convert_to_numpy=True
+            [text],
+            convert_to_numpy=True,
+            normalize_embeddings=True,
         )
 
-        return embedding.astype("float32")
+        return embedding.astype(np.float32)
 
     # =====================================================
     # Search
     # =====================================================
 
     def search(
-
         self,
-        query,
-        top_k=TOP_K_RESULTS
-
+        query: str,
+        top_k: int = TOP_K
     ):
+
+        if self.index is None:
+
+            return []
 
         embedding = self.encode(query)
 
         distances, indices = self.index.search(
             embedding,
-            top_k
+            top_k,
         )
 
         results = []
 
-        for distance, idx in zip(
+        for score, idx in zip(
             distances[0],
-            indices[0]
+            indices[0],
         ):
 
-            if idx == -1:
+            if idx < 0:
                 continue
 
-            item = self.metadata[idx]
+            if idx >= len(self.metadata):
+                continue
 
-            results.append({
+            item = self.metadata[idx].copy()
 
-                "score": float(distance),
+            item["score"] = float(score)
 
-                "source": item["source"],
-
-                "data": item["data"]
-
-            })
+            results.append(item)
 
         return results
 
     # =====================================================
-    # Search by Source
+    # Best Match
     # =====================================================
 
-    def search_source(
+    def best_match(self, query: str):
 
-        self,
-        query,
-        source,
-        top_k=TOP_K_RESULTS
+        results = self.search(query, 1)
 
-    ):
+        if results:
 
-        results = self.search(query, top_k * 3)
+            return results[0]
 
-        filtered = []
-
-        for item in results:
-
-            if item["source"] == source:
-
-                filtered.append(item)
-
-        return filtered[:top_k]
+        return None
 
     # =====================================================
-    # Menu Search
+    # Number of Vectors
     # =====================================================
 
-    def search_menu(
+    def size(self):
 
-        self,
-        query,
-        top_k=TOP_K_RESULTS
+        if self.index is None:
 
-    ):
+            return 0
 
-        return self.search_source(
-            query,
-            "menu",
-            top_k
-        )
+        return self.index.ntotal
 
     # =====================================================
-    # FAQ Search
+    # Information
     # =====================================================
 
-    def search_faq(
+    def info(self):
 
-        self,
-        query,
-        top_k=TOP_K_RESULTS
+        return {
 
-    ):
+            "embedding_model": EMBEDDING_MODEL,
 
-        return self.search_source(
-            query,
-            "faq",
-            top_k
-        )
+            "vectors": self.size(),
 
-    # =====================================================
-    # Restaurant Search
-    # =====================================================
+            "metadata_records": len(self.metadata),
 
-    def search_restaurant(
+            "top_k": TOP_K,
 
-        self,
-        query,
-        top_k=TOP_K_RESULTS
-
-    ):
-
-        return self.search_source(
-            query,
-            "restaurant",
-            top_k
-        )
+        }
 
 
 # =========================================================
-# Testing
+# Singleton
 # =========================================================
 
-if __name__ == "__main__":
-
-    store = VectorStore()
-
-    while True:
-
-        print()
-
-        query = input("Ask > ")
-
-        if query.lower() == "exit":
-            break
-
-        results = store.search(query)
-
-        print()
-
-        for i, item in enumerate(results, 1):
-
-            print("=" * 50)
-
-            print(f"Result {i}")
-
-            print("Source :", item["source"])
-
-            print("Distance :", round(item["score"], 4))
-
-            print(item["data"])
+vector_store = VectorStore()
