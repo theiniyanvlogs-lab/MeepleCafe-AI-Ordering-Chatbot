@@ -2,7 +2,7 @@
 =========================================================
 Meeple Cafe AI Ordering Chatbot
 FAISS Vector Store
-Version : 3.0
+Version : 3.1 (Lazy Loading)
 =========================================================
 """
 
@@ -34,11 +34,10 @@ class VectorStore:
 
     Features
     --------
-    ✔ Load FAISS index
-    ✔ Load metadata
-    ✔ Load embedding model
-    ✔ Semantic similarity search
-    ✔ Return top-k menu chunks
+    ✔ Lazy Loading
+    ✔ FAISS Search
+    ✔ SentenceTransformer Embeddings
+    ✔ Metadata Lookup
     """
 
     def __init__(self):
@@ -46,44 +45,60 @@ class VectorStore:
         self.index = None
         self.metadata = []
         self.model = None
-
-        self.load()
+        self.loaded = False
 
     # =====================================================
-    # Load Everything
+    # Lazy Load
     # =====================================================
 
-    def load(self):
+    def ensure_loaded(self):
+
+        if self.loaded:
+            return
+
+        print("=" * 60)
+        print("Loading Vector Store...")
+        print("=" * 60)
 
         self._load_model()
         self._load_index()
         self._load_metadata()
 
+        self.loaded = True
+
+        print("Vector Store Ready")
+        print("=" * 60)
+
     # =====================================================
-    # Load Embedding Model
+    # Load Model
     # =====================================================
 
     def _load_model(self):
+
+        print("Loading SentenceTransformer...")
 
         self.model = SentenceTransformer(
             EMBEDDING_MODEL
         )
 
+        print("SentenceTransformer Loaded")
+
     # =====================================================
-    # Load FAISS Index
+    # Load FAISS
     # =====================================================
 
     def _load_index(self):
 
-        if not os.path.exists(FAISS_INDEX):
+        print("Loading FAISS Index...")
 
+        if not os.path.exists(FAISS_INDEX):
             raise FileNotFoundError(
                 f"FAISS index not found:\n{FAISS_INDEX}"
             )
 
-        self.index = faiss.read_index(
-            str(FAISS_INDEX)
-        )
+        self.index = faiss.read_index(FAISS_INDEX)
+
+        print(f"Loaded {self.index.ntotal} vectors")
 
     # =====================================================
     # Load Metadata
@@ -91,21 +106,25 @@ class VectorStore:
 
     def _load_metadata(self):
 
-        if not os.path.exists(FAISS_METADATA):
+        print("Loading Metadata...")
 
+        if not os.path.exists(FAISS_METADATA):
             raise FileNotFoundError(
-                f"Metadata file not found:\n{FAISS_METADATA}"
+                f"Metadata not found:\n{FAISS_METADATA}"
             )
 
         with open(FAISS_METADATA, "rb") as f:
-
             self.metadata = pickle.load(f)
 
+        print(f"Loaded {len(self.metadata)} metadata records")
+
     # =====================================================
-    # Encode Query
+    # Encode
     # =====================================================
 
-    def encode(self, text: str):
+    def encode(self, text):
+
+        self.ensure_loaded()
 
         embedding = self.model.encode(
             [text],
@@ -119,29 +138,20 @@ class VectorStore:
     # Search
     # =====================================================
 
-    def search(
-        self,
-        query: str,
-        top_k: int = TOP_K
-    ):
+    def search(self, query, top_k=TOP_K):
 
-        if self.index is None:
-
-            return []
+        self.ensure_loaded()
 
         embedding = self.encode(query)
 
         distances, indices = self.index.search(
             embedding,
-            top_k,
+            top_k
         )
 
         results = []
 
-        for score, idx in zip(
-            distances[0],
-            indices[0],
-        ):
+        for score, idx in zip(distances[0], indices[0]):
 
             if idx < 0:
                 continue
@@ -150,9 +160,7 @@ class VectorStore:
                 continue
 
             item = self.metadata[idx].copy()
-
             item["score"] = float(score)
-
             results.append(item)
 
         return results
@@ -161,44 +169,34 @@ class VectorStore:
     # Best Match
     # =====================================================
 
-    def best_match(self, query: str):
+    def best_match(self, query):
 
         results = self.search(query, 1)
 
-        if results:
-
-            return results[0]
-
-        return None
+        return results[0] if results else None
 
     # =====================================================
-    # Number of Vectors
+    # Size
     # =====================================================
 
     def size(self):
 
-        if self.index is None:
-
-            return 0
+        self.ensure_loaded()
 
         return self.index.ntotal
 
     # =====================================================
-    # Information
+    # Info
     # =====================================================
 
     def info(self):
 
         return {
-
+            "loaded": self.loaded,
             "embedding_model": EMBEDDING_MODEL,
-
-            "vectors": self.size(),
-
+            "vectors": self.index.ntotal if self.loaded else 0,
             "metadata_records": len(self.metadata),
-
             "top_k": TOP_K,
-
         }
 
 
