@@ -1,38 +1,17 @@
-# ==========================================================
-# Meeple Cafe AI Ordering Chatbot
-# Requirements
-# ==========================================================
-
-# FastAPI
 fastapi==0.116.1
 uvicorn[standard]==0.35.0
 
-# Validation
+numpy==2.0.2
+pandas==2.2.2
+scikit-learn==1.6.1
+scipy==1.16.3
+
+faiss-cpu==1.14.3
+
+sentence-transformers==5.1.0
+transformers==4.55.4
+
+torch==2.8.0
+
 pydantic==2.11.7
-
-# Data Processing
-pandas==2.3.1
-numpy==2.3.1
-
-# Machine Learning
-sentence-transformers==5.0.0
-transformers==4.53.2
-torch==2.7.1
-
-# Vector Database
-faiss-cpu==1.11.0.post1
-
-# Utilities
 python-dotenv==1.1.1
-
-# Multipart Form Support
-python-multipart==0.0.20
-
-# HTTP Requests
-requests==2.32.4
-
-# ASGI
-starlette==0.47.2
-
-# Typing
-typing_extensions==4.14.1
