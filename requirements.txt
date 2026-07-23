@@ -1,6 +1,11 @@
+fastapi
+uvicorn
 faiss-cpu
 sentence-transformers
 pandas
 numpy
 scikit-learn
-torch
+sqlite-utils
+python-multipart
+pydantic
+nest_asyncio
