@@ -2,14 +2,7 @@
 
 import { ShoppingCart } from "lucide-react";
 
-export interface MenuItem {
-  id: number;
-  name: string;
-  category: string;
-  description: string;
-  price: number;
-  image?: string;
-}
+import type { MenuItem } from "@/types/chat";
 
 interface MenuCardProps {
   item: MenuItem;
