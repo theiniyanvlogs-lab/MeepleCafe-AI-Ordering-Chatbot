@@ -2,7 +2,7 @@
 =========================================================
 Meeple Cafe AI Ordering Chatbot
 Menu Search Engine
-Version : 1.0
+Version : 2.0
 =========================================================
 """
 
@@ -10,17 +10,19 @@ import os
 import pandas as pd
 
 
-class MenuSearchEngine:
+class SearchEngine:
     """
     Menu Search Engine
 
-    Responsibilities
-    ----------------
-    1. Load Menu CSV
-    2. Search by Category
-    3. Search by Item Name
-    4. Search by Price
-    5. Search by Veg / Non-Veg
+    Features
+    --------
+    ✔ Load menu.csv
+    ✔ Get complete menu
+    ✔ Search by keyword
+    ✔ Search by category
+    ✔ Search by type
+    ✔ Search by price
+    ✔ Return JSON objects (FastAPI Ready)
     """
 
     def __init__(self):
@@ -29,170 +31,153 @@ class MenuSearchEngine:
             os.path.dirname(__file__),
             "..",
             "data",
-            "menu.csv"
+            "menu.csv",
         )
 
         try:
+
             self.menu = pd.read_csv(data_path).fillna("")
-        except Exception:
+
+        except Exception as e:
+
+            print("Unable to load menu.csv")
+            print(e)
+
             self.menu = pd.DataFrame()
 
-    # --------------------------------------------------
-    # Main Search
-    # --------------------------------------------------
+    # =====================================================
+    # Get Complete Menu
+    # =====================================================
+
+    def get_all_menu(self):
+
+        if self.menu.empty:
+            return []
+
+        return [self._row_to_dict(row) for _, row in self.menu.iterrows()]
+
+    # =====================================================
+    # Search
+    # =====================================================
 
     def search(self, query: str):
 
         if self.menu.empty:
-            return "Menu database is empty."
+            return []
 
         query = query.lower().strip()
 
-        # ----------------------------
-        # Category Search
-        # ----------------------------
+        df = self.menu.copy()
 
-        categories = [
-            "burger",
-            "pizza",
-            "pasta",
-            "sandwich",
-            "coffee",
-            "shake",
-            "snack",
-            "dessert",
-            "beverage",
-            "maggi"
+        # ------------------------------------
+        # Price Search
+        # ------------------------------------
+
+        if "under" in query or "below" in query or "less" in query:
+
+            words = query.split()
+
+            for word in words:
+
+                if word.isdigit():
+
+                    price = int(word)
+
+                    result = df[df["Price"] <= price]
+
+                    return [
+                        self._row_to_dict(row)
+                        for _, row in result.iterrows()
+                    ]
+
+        # ------------------------------------
+        # General Search
+        # ------------------------------------
+
+        result = df[
+            df["Item_Name"].str.lower().str.contains(query, na=False)
+            | df["Category"].str.lower().str.contains(query, na=False)
+            | df["Sub_Category"].str.lower().str.contains(query, na=False)
+            | df["Description"].str.lower().str.contains(query, na=False)
+            | df["Keywords"].str.lower().str.contains(query, na=False)
+            | df["Type"].str.lower().str.contains(query, na=False)
         ]
 
-        for category in categories:
+        return [
+            self._row_to_dict(row)
+            for _, row in result.iterrows()
+        ]
 
-            if category in query:
+    # =====================================================
+    # Veg / Non-Veg
+    # =====================================================
 
-                return self.search_category(category)
+    def search_type(self, food_type: str):
 
-        # ----------------------------
-        # Veg Search
-        # ----------------------------
+        if self.menu.empty:
+            return []
 
-        if "veg" in query:
+        result = self.menu[
+            self.menu["Type"].str.lower() == food_type.lower()
+        ]
 
-            return self.search_type("Veg")
+        return [
+            self._row_to_dict(row)
+            for _, row in result.iterrows()
+        ]
 
-        if "non veg" in query or "nonveg" in query:
+    # =====================================================
+    # Category
+    # =====================================================
 
-            return self.search_type("Non Veg")
+    def search_category(self, category: str):
 
-        # ----------------------------
-        # Price Search
-        # Example:
-        # below 200
-        # under 150
-        # ----------------------------
-
-        words = query.split()
-
-        for i, word in enumerate(words):
-
-            if word in ["below", "under", "less"]:
-
-                if i + 1 < len(words):
-
-                    try:
-                        price = int(words[i + 1])
-
-                        return self.search_price(price)
-
-                    except ValueError:
-                        pass
-
-        # ----------------------------
-        # Item Search
-        # ----------------------------
-
-        return self.search_item(query)
-
-    # --------------------------------------------------
-    # Category Search
-    # --------------------------------------------------
-
-    def search_category(self, category):
+        if self.menu.empty:
+            return []
 
         result = self.menu[
             self.menu["Category"]
             .str.lower()
-            .str.contains(category)
+            .str.contains(category.lower(), na=False)
         ]
 
-        if result.empty:
-            return "No items found."
+        return [
+            self._row_to_dict(row)
+            for _, row in result.iterrows()
+        ]
 
-        return self.format_result(result)
+    # =====================================================
+    # Price
+    # =====================================================
 
-    # --------------------------------------------------
-    # Item Search
-    # --------------------------------------------------
+    def search_price(self, max_price: int):
 
-    def search_item(self, keyword):
+        if self.menu.empty:
+            return []
 
         result = self.menu[
-            self.menu["Item_Name"]
-            .str.lower()
-            .str.contains(keyword)
+            self.menu["Price"] <= max_price
         ]
 
-        if result.empty:
-            return "No matching item found."
-
-        return self.format_result(result)
-
-    # --------------------------------------------------
-    # Veg / Non-Veg
-    # --------------------------------------------------
-
-    def search_type(self, food_type):
-
-        result = self.menu[
-            self.menu["Type"]
-            .str.lower() ==
-            food_type.lower()
+        return [
+            self._row_to_dict(row)
+            for _, row in result.iterrows()
         ]
 
-        if result.empty:
-            return "No items found."
+    # =====================================================
+    # Convert Row to Dictionary
+    # =====================================================
 
-        return self.format_result(result)
+    def _row_to_dict(self, row):
 
-    # --------------------------------------------------
-    # Price Search
-    # --------------------------------------------------
-
-    def search_price(self, price):
-
-        result = self.menu[
-            self.menu["Price"] <= price
-        ]
-
-        if result.empty:
-            return "No items found."
-
-        return self.format_result(result)
-
-    # --------------------------------------------------
-    # Format Output
-    # --------------------------------------------------
-
-    def format_result(self, dataframe):
-
-        response = []
-
-        for _, row in dataframe.iterrows():
-
-            response.append(
-                f"🍽️ {row['Item_Name']}\n"
-                f"📂 {row['Category']}\n"
-                f"🥗 {row['Type']}\n"
-                f"💰 ₹{row['Price']}\n"
-            )
-
-        return "\n".join(response)
+        return {
+            "id": int(row["Item_ID"]),
+            "name": row["Item_Name"],
+            "category": row["Category"],
+            "sub_category": row["Sub_Category"],
+            "type": row["Type"],
+            "price": float(row["Price"]),
+            "description": row["Description"],
+            "keywords": row["Keywords"],
+            "available": row["Available"],
+        }
