@@ -2,28 +2,39 @@
 =========================================================
 Meeple Cafe AI Ordering Chatbot
 RAG Engine
-Version : 1.0
+Version : 3.0
 =========================================================
 """
 
-from vector_store import VectorStore
+try:
+    from backend.vector_store import vector_store
+    from backend.search_engine import SearchEngine
+    from backend.config import TOP_K
+except ImportError:
+    from vector_store import vector_store
+    from search_engine import SearchEngine
+    from config import TOP_K
 
 
 class RAGEngine:
     """
     Retrieval Augmented Generation Engine
 
-    Responsibilities
-    ----------------
-    • Search Menu
-    • Search FAQ
-    • Search Restaurant Information
-    • Format AI Responses
+    Features
+    --------
+    ✔ Semantic Search (FAISS)
+    ✔ Keyword Search (CSV)
+    ✔ Menu Search
+    ✔ FAQ Search
+    ✔ Restaurant Search
+    ✔ Context Builder
+    ✔ AI Response Formatter
     """
 
     def __init__(self):
 
-        self.vector_store = VectorStore()
+        self.vector_store = vector_store
+        self.search_engine = SearchEngine()
 
     # =====================================================
     # Main Search
@@ -31,20 +42,86 @@ class RAGEngine:
 
     def ask(self, query):
 
+        return self.answer(query)
+
+    # =====================================================
+    # AI Answer
+    # =====================================================
+
+    def answer(self, query):
+
         query = query.strip()
 
         if not query:
+
             return "Please enter your question."
 
-        results = self.vector_store.search(query)
+        # --------------------------------------------
+        # Semantic Search
+        # --------------------------------------------
+
+        results = self.vector_store.search(
+            query=query,
+            top_k=TOP_K
+        )
+
+        # --------------------------------------------
+        # Fallback Search
+        # --------------------------------------------
 
         if not results:
+
+            results = self.search_engine.search(query)
+
+            if results:
+
+                return self.format_menu(results)
+
             return (
                 "Sorry, I couldn't find anything "
                 "related to your question."
             )
 
         return self.format_results(results)
+
+    # =====================================================
+    # Build Context
+    # =====================================================
+
+    def build_context(self, query):
+
+        results = self.vector_store.search(
+            query=query,
+            top_k=TOP_K
+        )
+
+        if not results:
+
+            return ""
+
+        lines = []
+
+        for item in results:
+
+            source = item.get("source", "")
+
+            data = item.get("data", {})
+
+            if source == "menu":
+
+                lines.append(
+
+                    f"{data.get('Item_Name','')} | "
+
+                    f"{data.get('Category','')} | "
+
+                    f"{data.get('Type','')} | "
+
+                    f"₹{data.get('Price','')}"
+
+                )
+
+        return "\n".join(lines)
 
     # =====================================================
     # Format Results
@@ -56,58 +133,95 @@ class RAGEngine:
 
         for item in results:
 
-            source = item["source"]
-            data = item["data"]
+            source = item.get("source", "")
 
-            # ----------------------------
-            # MENU
-            # ----------------------------
+            data = item.get("data", {})
+
+            # ----------------------------------------
+            # Menu
+            # ----------------------------------------
 
             if source == "menu":
 
-                text = (
-                    f"🍽️ {data.get('Item_Name','')}\n"
-                    f"Category : {data.get('Category','')}\n"
-                    f"Type : {data.get('Type','')}\n"
-                    f"Price : ₹{data.get('Price','')}\n"
-                    f"{data.get('Description','')}"
+                response.append(
+
+                    f"🍽️ {data.get('Item_Name','Unknown')}\n"
+
+                    f"📂 Category : {data.get('Category','-')}\n"
+
+                    f"🥗 Type : {data.get('Type','-')}\n"
+
+                    f"💰 Price : ₹{data.get('Price','-')}\n"
+
+                    f"📝 {data.get('Description','')}"
+
                 )
 
-                response.append(text)
-
-            # ----------------------------
+            # ----------------------------------------
             # FAQ
-            # ----------------------------
+            # ----------------------------------------
 
             elif source == "faq":
 
-                text = (
-                    f"❓ {data.get('Question','')}\n"
+                response.append(
+
+                    f"❓ {data.get('Question','')}\n\n"
+
                     f"✅ {data.get('Answer','')}"
+
                 )
 
-                response.append(text)
-
-            # ----------------------------
+            # ----------------------------------------
             # Restaurant
-            # ----------------------------
+            # ----------------------------------------
 
             elif source == "restaurant":
 
-                lines = []
+                info = []
 
                 for key, value in data.items():
 
-                    lines.append(
-                        f"{key} : {value}"
-                    )
+                    info.append(f"{key} : {value}")
 
                 response.append(
+
                     "🏢 Restaurant Information\n\n"
-                    + "\n".join(lines)
+
+                    + "\n".join(info)
+
                 )
 
-        return "\n\n" + "\n\n-----------------------------\n\n".join(response)
+        if not response:
+
+            return "No matching information found."
+
+        return "\n\n" + "\n\n----------------------------------------\n\n".join(response)
+
+    # =====================================================
+    # Format Menu (Fallback Search)
+    # =====================================================
+
+    def format_menu(self, results):
+
+        response = []
+
+        for item in results:
+
+            response.append(
+
+                f"🍽️ {item.get('name','')}\n"
+
+                f"📂 {item.get('category','')}\n"
+
+                f"🥗 {item.get('type','')}\n"
+
+                f"💰 ₹{item.get('price','')}\n"
+
+                f"{item.get('description','')}"
+
+            )
+
+        return "\n\n".join(response)
 
     # =====================================================
     # Menu Search
@@ -115,12 +229,13 @@ class RAGEngine:
 
     def menu(self, query):
 
-        results = self.vector_store.search_menu(query)
+        results = self.search_engine.search(query)
 
         if not results:
+
             return "No menu items found."
 
-        return self.format_results(results)
+        return self.format_menu(results)
 
     # =====================================================
     # FAQ Search
@@ -131,6 +246,7 @@ class RAGEngine:
         results = self.vector_store.search_faq(query)
 
         if not results:
+
             return "No FAQ found."
 
         return self.format_results(results)
@@ -144,9 +260,44 @@ class RAGEngine:
         results = self.vector_store.search_restaurant(query)
 
         if not results:
+
             return "No restaurant information found."
 
         return self.format_results(results)
+
+    # =====================================================
+    # Retrieve Raw Results
+    # =====================================================
+
+    def retrieve(self, query):
+
+        return self.vector_store.search(
+            query=query,
+            top_k=TOP_K
+        )
+
+    # =====================================================
+    # Health Check
+    # =====================================================
+
+    def info(self):
+
+        return {
+
+            "vector_store": self.vector_store.info(),
+
+            "top_k": TOP_K,
+
+            "status": "Ready"
+
+        }
+
+
+# =========================================================
+# Singleton
+# =========================================================
+
+rag_engine = RAGEngine()
 
 
 # =========================================================
@@ -155,21 +306,20 @@ class RAGEngine:
 
 if __name__ == "__main__":
 
-    rag = RAGEngine()
-
     print("=" * 60)
-    print("Meeple Cafe RAG Engine")
+    print("Meeple Cafe AI Ordering Chatbot")
+    print("RAG Engine Version 3.0")
     print("Type 'exit' to quit")
     print("=" * 60)
 
     while True:
 
-        print()
+        query = input("\nAsk > ").strip()
 
-        question = input("Ask > ")
+        if query.lower() == "exit":
 
-        if question.lower() == "exit":
             break
 
         print()
-        print(rag.ask(question))
+
+        print(rag_engine.answer(query))
