@@ -2,12 +2,7 @@
 
 import { Minus, Plus, ShoppingCart, Trash2 } from "lucide-react";
 
-export interface CartItem {
-  id: number;
-  name: string;
-  price: number;
-  quantity: number;
-}
+import type { CartItem } from "@/types/chat";
 
 interface CartPanelProps {
   items: CartItem[];
